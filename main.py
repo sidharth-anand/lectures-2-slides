@@ -172,7 +172,7 @@ def lecture2slides(root_dir: str, threshold: float, processes: int, save_initial
 
     # Create a pool which can execute more than one process paralelly
     pool = Pool(processes=processes)
-    
+
     try:
         # Map the function
         print("Started {} processes..".format(processes))
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     parser.add_argument('root', type=str,
                         help='The path to the folder containing videos')
 
-    parser.add_argument('-t', '--threshold', default=0.85,
+    parser.add_argument('-t', '--threshold', default=0.82,
                         type=float, help='Similarity threshold to add slide')
 
     parser.add_argument(
