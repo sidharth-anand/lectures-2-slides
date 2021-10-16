@@ -9,10 +9,11 @@ import cv2
 import img2pdf
 import argparse
 
-from skimage.metrics import structural_similarity
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 from math import ceil
+
+from skimage.metrics import structural_similarity
 
 
 def save_frame(frame, path, frame_id):
@@ -57,43 +58,49 @@ def extract_slides_from_vid(video_path: str, threshold: float, save_initial: boo
 
     bar = tqdm(total=eval_count, position=position)
 
-    while capture.isOpened():
-        frame_id = capture.get(cv2.CAP_PROP_POS_FRAMES)
+    try:
+        while capture.isOpened():
+            frame_id = capture.get(cv2.CAP_PROP_POS_FRAMES)
 
-        ret, frame = capture.read()
+            ret, frame = capture.read()
 
-        if not ret:
-            break
+            if not ret:
+                break
 
-        frame = frame[slide_bounds[1]:slide_bounds[3],
-                      slide_bounds[0]:slide_bounds[2], :]
+            frame = frame[slide_bounds[1]:slide_bounds[3],
+                        slide_bounds[0]:slide_bounds[2], :]
 
-        if prev_frame is not None:
-            prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-            current_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if prev_frame is not None:
+                prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+                current_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            (score, diff) = structural_similarity(
-                prev_gray, current_gray, full=True)
+                (score, diff) = structural_similarity(
+                    prev_gray, current_gray, full=True)
 
-            if score < threshold:
+                if score < threshold:
+                    save_frame(frame, video_folder, frame_id)
+
+            elif save_initial:
                 save_frame(frame, video_folder, frame_id)
 
-        elif save_initial:
-            save_frame(frame, video_folder, frame_id)
+            prev_frame = frame
 
-        prev_frame = frame
+            bar.update()
 
-        bar.update()
+            capture.set(cv2.CAP_PROP_POS_FRAMES, min(
+                frame_id + frame_skip, frame_count))
 
-        capture.set(cv2.CAP_PROP_POS_FRAMES, min(
-            frame_id + frame_skip, frame_count))
+        capture.release()
+        bar.close()
+        bar.clear()
 
-    capture.release()
-    bar.close()
-    bar.clear()
-
-    with open(pdf_path, "wb") as f:
-        f.write(img2pdf.convert(glob.glob(video_folder + '/*.jpg')))
+        with open(pdf_path, "wb") as f:
+            f.write(img2pdf.convert(glob.glob(video_folder + '/*.jpg')))
+        
+    except KeyboardInterrupt:
+        capture.release()
+        bar.close()
+        bar.clear()
 
     shutil.rmtree(video_folder)
 
@@ -165,14 +172,19 @@ def lecture2slides(root_dir: str, threshold: float, processes: int, save_initial
 
     # Create a pool which can execute more than one process paralelly
     pool = Pool(processes=processes)
+    
+    try:
+        # Map the function
+        print("Started {} processes..".format(processes))
+        pool.map(extract_slides_from_batch, split_data)
 
-    # Map the function
-    print("Started {} processes..".format(processes))
-    pool.map(extract_slides_from_batch, split_data)
+        # Wait until all parallel processes are done and then execute main script
+        pool.close()
+        pool.join()
 
-    # Wait until all parallel processes are done and then execute main script
-    pool.close()
-    pool.join()
+    except KeyboardInterrupt:
+        pool.close()
+        pool.join()
 
 
 if __name__ == '__main__':
