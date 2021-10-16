@@ -47,7 +47,7 @@ The program provides many command line options to customize the execution
 ### Note
 - The slide coordinates are configure by default for the standard presentation size for a 720 Google Meet recording.
 - Increasing the frequency improves performance
-- If you find slideas being repeated due to writing, reduce the threshold
+- If you find slides being repeated due to writing, reduce the threshold. We find that the sweet spot is between 0.82 to 0.85. (Do not set it below 0.8 as it will omit almost every slide. Conversely, setting it above 0.9 will make even tiny changes into a new slide)
 
 ## Future updates
 
