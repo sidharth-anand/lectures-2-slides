@@ -1,2 +1,6 @@
 *.mp4
 *.pdf
+*.jpg
+/frames
+/videos
+/slides
