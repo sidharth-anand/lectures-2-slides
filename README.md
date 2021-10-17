@@ -5,14 +5,14 @@
 Convert lecture videos to slides in one line. Takes an input of a directory containing your lecture videos and outputs a directory containing .PDF files containing the slides of each lecture. (You can download the videos from Google Drive even if you only have View-Only permissions. Google it)
 
 
-The utility only captures slides when it detects that a slide has changed and does not capture every frame. Thus your pdf will be very close to the actual slides used. (If you find that slides are being repeated due to being written on, try reducing the threshold as detailed below). You can also automatically run OCr on the resulting PDF files to makie your slides searchable and copy/paste-able
+The utility only captures slides when it detects that a slide has changed and does not capture every frame. Thus your pdf will be very close to the actual slides used. (If you find that slides are being repeated due to being written on, try reducing the threshold as detailed below). You can also automatically run OCR on the resulting PDF files to make your slides searchable and copy/paste-able
 
 ## Features
 
 - Convert a video file into a .PDF of the respective slides
 - MultiProcessing for parallel conversion of videos in an folder
 - Progress Indication and approximate ETA
-- Run automatic OCR on slides and saves a text layer to the resulting PDF
+- Run automatic OCR on slides and save a text layer to the resulting PDF
 
 ## Running
 
@@ -36,7 +36,7 @@ The program provides many command line options to customize the execution
 
     -p, --processes                      Number of parallel processes
 
-    -s, --save-initial                   Use this option if you find the first.
+    -s, --save-initial                   Use this option if you find the first
                                          slide from the video is missing
 
     -sl, --left                          The left coordinate of the slide in the video
@@ -52,7 +52,7 @@ The program provides many command line options to customize the execution
     --ocr                                Run OCR to make the resulting PDF searchable
 
 ### Note
-- The slide coordinates are configure by default for the standard presentation size for a 720 Google Meet recording.
+- The slide coordinates are configured by default for the standard presentation size for a 720p Google Meet recording.
 - Increasing the frequency improves performance
 - If you find slides being repeated due to writing, reduce the threshold. We find that the sweet spot is between 0.82 to 0.85. (Do not set it below 0.8 as it will omit almost every slide. Conversely, setting it above 0.9 will make even tiny changes into a new slide)
 
