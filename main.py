@@ -4,17 +4,18 @@ import glob
 import time
 import typing
 import sys
+import subprocess
 
 import cv2
 import img2pdf
 import argparse
 
 from multiprocessing import Pool, cpu_count
-from tqdm import tqdm
 from math import ceil
+from pathlib import Path
 
 from skimage.metrics import structural_similarity
-
+from tqdm import tqdm
 
 def save_frame(frame, path, frame_id):
     filename = path + "/frame_" + \
@@ -120,7 +121,7 @@ def extract_slides_from_batch(process_data: dict):
             video, threshold, save_initial, capture_frequency, slide_bounds, temp_captures_path, output_path, position)
 
 
-def lecture2slides(root_dir: str, threshold: float, processes: int, save_initial: bool, slide_bounds: typing.List[int], output_path: str, capture_frequency: int) -> None:
+def lecture2slides(root_dir: str, threshold: float, processes: int, save_initial: bool, slide_bounds: typing.List[int], output_path: str, capture_frequency: int, run_ocr: bool) -> None:
     if not os.path.exists(root_dir):
         print('Could not find the folder:', root_dir)
         return
@@ -165,7 +166,7 @@ def lecture2slides(root_dir: str, threshold: float, processes: int, save_initial
             "slide_bounds": slide_bounds,
             "capture_frequency": capture_frequency,
             "temp_captures_path": temp_captures_path,
-            "output_path": output_path
+            "output_path": output_path,
         }
 
         split_data.append(process_data)
@@ -181,6 +182,24 @@ def lecture2slides(root_dir: str, threshold: float, processes: int, save_initial
         # Wait until all parallel processes are done and then execute main script
         pool.close()
         pool.join()
+
+        if run_ocr:
+            print('Running OCR on pdf outputs...')
+
+            for rootDir, directory, filenames in os.walk(output_path):
+                for filename in filenames:
+                    file_ext = os.path.splitext(filename)[1]
+
+                    if file_ext == '.pdf':
+                        cmd = ["ocrmypdf", os.path.join(output_path, filename), os.path.join(output_path, filename)]
+                        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+                        if proc.stdout is not None:
+                            result = proc.stdout.read()
+                            if proc.returncode == 6:
+                                print("Skipped document because it already contained text", filename)
+                            elif proc.returncode == 0:
+                                print("OCR complete for", filename)
 
     except KeyboardInterrupt:
         pool.close()
@@ -215,7 +234,9 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, help='The output path')
 
     parser.add_argument('-f', '--frequency', type=int,
-                        default=1, help='Inverse of slide capture frame rate')
+                        default=10, help='Inverse of slide capture frame rate')
+
+    parser.add_argument('--ocr', default=False, help='Run OCR on the resulting PDF', action='store_true')
 
     args = parser.parse_args()
 
@@ -223,4 +244,4 @@ if __name__ == '__main__':
         args.output = 'slides'
 
     lecture2slides(args.root, args.threshold, args.processes, args.save_initial, [
-                   args.left, args.top, args.right, args.bottom], args.output, args.frequency)
+                   args.left, args.top, args.right, args.bottom], args.output, args.frequency, args.ocr)

@@ -3,3 +3,4 @@ img2pdf
 argparse
 tqdm
 scikit-image
+ocrmypdf
